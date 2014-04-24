@@ -155,7 +155,7 @@ class TransformWorker(object):
         end = time.time()
 
         if len(body) != content_length:
-            raise TransformError('process stdout closed while reading body') 
+            raise TransformError('process stdout closed while reading body')
 
         r.body = body
         r._extfilter_duration = end - start

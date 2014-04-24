@@ -28,7 +28,6 @@ class SubprocessTween(object):
             try:
                 return transform(response)
             except TransformError as e:
-                # This tween 
                 return transform_error(detail=e.detail, comment=e.comment)
 
         return subprocess_tween
