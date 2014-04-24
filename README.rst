@@ -2,6 +2,12 @@
 Subprocess Middleware
 =====================
 
+|Build status|_
+
+.. |Build status| image:: https://travis-ci.org/lrowe/subprocess_middleware.png?branch=master
+.. _Build status: https://travis-ci.org/lrowe/subprocess_middleware
+
+
 This package was built to support rendering Python generated JSON into HTML using a nodejs.
 Transform subprocesses are reused, avoiding process startup overhead and allowing the JIT to kick in.
 For our code this gives a 10x speedup for subsequent responses.
