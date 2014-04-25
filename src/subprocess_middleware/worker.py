@@ -66,7 +66,7 @@ def cleanup_processes():
 def response_to_file(self, fp):
     # Force enumeration of the body (to set content-length)
     self.body
-    parts = [self.status, '\r\n']
+    parts = ['HTTP/1.1 ', self.status, '\r\n']
     parts += map('%s: %s\r\n'.__mod__, self.headerlist)
     parts += ['\r\n']
     fp.write(bytes_(''.join(parts)))
@@ -120,9 +120,14 @@ class TransformWorker(object):
         headerlist = []
 
         # This is essentially Response.from_file with more error handling
-        status = process.stdout.readline().strip()
-        if not status:
+        status_line = process.stdout.readline().strip()
+        if not status_line:
             raise TransformError('missing status line')
+
+        if not status_line.startswith(b'HTTP/1.1 '):
+            raise TransformError("malformed status line, expected: 'HTTP/1.1 ', got: %r" % status_line)
+
+        http_version, status = status_line.split(None, 1)
 
         while 1:
             line = process.stdout.readline()
