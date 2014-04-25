@@ -74,11 +74,9 @@ def response_to_file(self, fp):
 
 
 class TransformWorker(object):
-    def __init__(self, args, bufsize=0, env=None, shell=False, reload_process=False, Response=webob.Response):
+    def __init__(self, args, reload_process=False, Response=webob.Response, **kw):
         self.args = args
-        self.bufsize = bufsize
-        self.env = env
-        self.shell = shell
+        self.kw = kw
         self.reload_process = reload_process
         self.Response = Response
         self.scope = threading.local()
@@ -87,9 +85,9 @@ class TransformWorker(object):
         """ defer creation as __init__ also called in management thread
         """
         process = subprocess.Popen(
-            self.args, close_fds=True, bufsize=self.bufsize,
+            self.args, close_fds=True,
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            env=self.env, shell=self.shell,
+            **self.kw
         )
         worker_processes.add(process)
         return process
