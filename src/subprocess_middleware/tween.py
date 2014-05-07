@@ -20,6 +20,7 @@ class SubprocessTween(object):
         transform = self.transform
         should_transform = self.should_transform
         transform_error = self.transform_error
+        transform.reload_process = registry.settings['pyramid.reload_templates']
 
         def subprocess_tween(request):
             response = handler(request)
