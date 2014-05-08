@@ -169,7 +169,7 @@ class TransformWorker(object):
             raise TransformError('process stdout closed while reading body')
 
         r.body = body
-        r._extfilter_duration = end - start
+        r._subprocess_middleware_duration = end - start
 
         return r
 
