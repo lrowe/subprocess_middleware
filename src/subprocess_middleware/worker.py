@@ -146,6 +146,11 @@ class TransformWorker(object):
                 raise TransformError('bad header line: %r' % (line))
 
             header_name = native_(header_name, 'utf-8')
+
+            # WSGI disallows Connection header.
+            if header_name.lower() == 'connection':
+                continue
+
             value = native_(value, 'utf-8')
             value = value.strip()
             headerlist.append((header_name, value))
