@@ -115,8 +115,6 @@ class TransformWorker(object):
         return errout
 
     def _transform(self, process, response_in):
-        start = time.time()
-
         response_to_file(response_in, process.stdin)
         process.stdin.flush()
 
@@ -163,13 +161,11 @@ class TransformWorker(object):
 
         content_length = r.content_length or 0
         body = process.stdout.read(content_length)
-        end = time.time()
 
         if len(body) != content_length:
             raise TransformError('process stdout closed while reading body')
 
         r.body = body
-        r._subprocess_middleware_duration = end - start
 
         return r
 
