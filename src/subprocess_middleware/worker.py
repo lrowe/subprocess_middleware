@@ -1,4 +1,7 @@
-from webob.compat import bytes_
+from webob.compat import (
+    bytes_,
+    native_,
+)
 import atexit
 import logging
 try:
@@ -142,9 +145,9 @@ class TransformWorker(object):
             except ValueError:
                 raise TransformError('bad header line: %r' % (line))
 
+            header_name = native_(header_name, 'utf-8')
+            value = native_(value, 'utf-8')
             value = value.strip()
-            header_name = header_name.decode('utf-8')
-            value = value.decode('utf-8')
             headerlist.append((header_name, value))
 
         r = self.Response(
