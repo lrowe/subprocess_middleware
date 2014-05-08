@@ -51,6 +51,7 @@ def app(request):
         return SubprocessMiddleware(
             app, {},
             should_transform='subprocess_middleware.tests.testing:should_transform',
+            after_transform='subprocess_middleware.tests.testing:after_transform',
             args='"{}" -m subprocess_middleware.tests.testing_transform'.format(sys.executable),
             env='subprocess_middleware.tests.testing:subprocess_env',
         )

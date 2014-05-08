@@ -41,11 +41,14 @@ def transform_error(detail, comment):
 
 class SubprocessMiddleware(object):
     should_transform = None
+    after_transform = None
 
-    def __init__(self, app, global_conf, should_transform=None, transform_error=transform_error, **settings):
+    def __init__(self, app, global_conf, should_transform=None, after_transform=None,
+                 transform_error=transform_error, **settings):
         self.app = app
         self.global_conf = global_conf
         self.should_transform = maybe_dotted(should_transform)
+        self.after_transform = maybe_dotted(after_transform)
         self.transform_error = maybe_dotted(transform_error)
 
         kw = settings.copy()
@@ -68,10 +71,14 @@ class SubprocessMiddleware(object):
         request = Request(environ)
         response = request.get_response(self.app)
 
-        if self.should_transform is None or self.should_transform(request, response):
-            try:
-                response = self.transform(response)
-            except TransformError as e:
-                response = self.transform_error(detail=e.detail, comment=e.comment)
+        if self.should_transform and not self.should_transform(request, response):
+            return response(environ, start_response)
+
+        try:
+            response = self.transform(response)
+        except TransformError as e:
+            response = self.transform_error(detail=e.detail, comment=e.comment)
+        else:
+            self.after_transform and self.after_transform(request, response)
 
         return response(environ, start_response)
