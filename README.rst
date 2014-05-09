@@ -2,11 +2,7 @@
 Subprocess Middleware
 =====================
 
-|Build status|_
-
-.. |Build status| image:: https://travis-ci.org/lrowe/subprocess_middleware.png?branch=master
-.. _Build status: https://travis-ci.org/lrowe/subprocess_middleware
-
+.. image:: https://travis-ci.org/lrowe/subprocess_middleware.svg?branch=master   :target: https://travis-ci.org/lrowe/subprocess_middleware
 
 This package was built to support rendering Python generated JSON into HTML using a nodejs.
 Transform subprocesses are reused, avoiding process startup overhead and allowing the JIT to kick in.
@@ -14,7 +10,6 @@ For our code this gives a 10x speedup for subsequent responses.
 
 The protocol is simple and generic, HTTP formatted responses (headers and body) are piped into and out of the transform subprocess.
 Transforms may modify both the response headers and body.
-``cat`` can act as the identity transform.
 
 Transforms modifying the response body must ensure the Content-Length header is updated to match.
 
@@ -26,6 +21,16 @@ The subprocess module in Python 2.7 can leak file descriptors.
 Backported fixes from Python 3.x are available in subprocess32_, and will be used if installed.
 
 .. _subprocess32: https://pypi.python.org/pypi/subprocess32
+
+
+Pipe buffering
+--------------
+
+For small responses, the unix command ``cat`` works as an identity transform.
+Once a response exceeds the pipe buffer limit (typically 16K or 64K), a deadlock occurs with both processes waiting for the other to read.
+To avoid this, subprocesses should read in the entirity of each response before writing to stdout and flush stdout at the response end.
+
+Working around this limitation would require writing and reading from different threads.
 
 
 Alternatives
@@ -64,3 +69,11 @@ PyV8_ allows running JavaScript in process.
 It can be tricky to build whereas nodejs packages are easily available.
 
 .. _PyV8: https://pypi.python.org/pypi/PyV8
+
+uWSGI Transformations
+---------------------
+
+uWSGI_ are working on an rpc plugin for their transformation system.
+The rpc protocol itself has a 64k request size limit.
+
+.. _uWSGI: http://uwsgi-docs.readthedocs.org/
