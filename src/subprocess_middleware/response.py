@@ -48,7 +48,7 @@ def response_to_file(self, fp, block_size=1 << 16):  # 64KB
     fp.write(b'0\r\n\r\n')
 
 
-def response_from_file(cls, fp):
+def response_from_file(cls, fp, block_size=1 << 16):  # 64KB
     """Reads a response from a file-like object (it must implement
     ``.read(size)`` and ``.readline()``).
 
@@ -130,18 +130,19 @@ def response_from_file(cls, fp):
                 break  # EOF
 
             try:
-                remaining = int(line, 16)
+                chunk_size = int(line, 16)
             except ValueError:
                 raise ValueError('invalid chunk header')
 
-            if remaining == 0:
+            if chunk_size == 0:
                 end_chunk = True
 
-            chunk = fp.read(remaining)
+            remaining = chunk_size
+            chunk = fp.read(min(remaining, block_size))
             while chunk:
                 r.app_iter.append(chunk)
                 remaining -= len(chunk)
-                chunk = fp.read(remaining)
+                chunk = fp.read(min(remaining, block_size))
 
             if remaining:
                 raise ValueError('EOF while reading chunk')
@@ -154,11 +155,11 @@ def response_from_file(cls, fp):
 
     elif r.content_length is not None:
         remaining = r.content_length
-        chunk = fp.read(remaining)
+        chunk = fp.read(min(remaining, block_size))
         while chunk:
             r.app_iter.append(chunk)
             remaining -= len(chunk)
-            chunk = fp.read(remaining)
+            chunk = fp.read(min(remaining, block_size))
 
         if remaining:
             raise ValueError('EOF while reading body')
@@ -167,9 +168,9 @@ def response_from_file(cls, fp):
         raise ValueError('missing Content-Length')
 
     else:
-        chunk = fp.read()
+        chunk = fp.read(block_size)
         while chunk:
             r.app_iter.append(chunk)
-            chunk = fp.read()
+            chunk = fp.read(block_size)
 
     return r
