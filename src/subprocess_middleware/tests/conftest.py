@@ -22,6 +22,15 @@ def make_config():
     def bad_request(request):
         raise HTTPBadRequest()
 
+    def connection_close(request):
+        response = Response(app_iter=['Hello ', 'world!'])
+        response.headers['Connection'] = 'close'
+        return response
+
+    def chunked(request):
+        response = Response(app_iter=['Hello ', 'world!'])
+        return response
+
     config = Configurator()
 
     config.add_route('root', '/')
@@ -32,6 +41,12 @@ def make_config():
 
     config.add_route('bad_request', '/bad_request')
     config.add_view(bad_request, route_name='bad_request')
+
+    config.add_route('connection_close', '/connection_close')
+    config.add_view(connection_close, route_name='connection_close')
+
+    config.add_route('chunked', '/chunked')
+    config.add_view(chunked, route_name='chunked')
 
     return config
 

@@ -26,3 +26,12 @@ def test_bad_request(testapp):
     res = testapp.get('/bad_request', status=400)
     assert 'X-Transformed' in res.headers
     assert 'X-After-Transform' in res.headers
+
+
+def test_connection_close(testapp):
+    res = testapp.get('/connection_close')
+    assert 'X-Transformed' in res.headers
+    assert 'X-After-Transform' in res.headers
+    res = testapp.get('/connection_close')
+    assert 'X-Transformed' in res.headers
+    assert 'X-After-Transform' in res.headers

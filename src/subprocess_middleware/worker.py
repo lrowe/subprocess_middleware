@@ -1,22 +1,23 @@
-from webob.compat import (
-    bytes_,
-    native_,
-)
 import atexit
 import logging
 try:
     import subprocess32 as subprocess
 except ImportError:
     import subprocess
+import sys
 import time
 import threading
 import weakref
 import webob
+from .response import (
+    response_from_file,
+    response_to_file,
+)
 
 log = logging.getLogger(__name__)
 
 
-class TransformError(Exception):
+class TransformError(ValueError):
     def __init__(self, detail, comment=''):
         self.detail = detail
         self.comment = comment
@@ -66,16 +67,6 @@ def cleanup_processes():
     cleanup(*list(worker_processes))
 
 
-def response_to_file(self, fp):
-    # Force enumeration of the body (to set content-length)
-    self.body
-    parts = ['HTTP/1.1 ', self.status, '\r\n']
-    parts += map('%s: %s\r\n'.__mod__, self.headerlist)
-    parts += ['\r\n']
-    fp.write(bytes_(''.join(parts)))
-    fp.write(self.body)
-
-
 class TransformWorker(object):
     def __init__(self, args, reload_process=False, Response=webob.Response, **kw):
         self.args = args
@@ -117,56 +108,16 @@ class TransformWorker(object):
     def _transform(self, process, response_in):
         response_to_file(response_in, process.stdin)
         process.stdin.flush()
+        close = response_in.headers.get('Connection', '').lower() == 'close'
+        if close:
+            process.stdin.close()
 
-        headerlist = []
+        r = response_from_file(self.Response, process.stdout)
+        if r is None:
+            raise ValueError('missing status line')
 
-        # This is essentially Response.from_file with more error handling
-        status_line = process.stdout.readline().strip()
-        if not status_line:
-            raise TransformError('missing status line')
-
-        if not status_line.startswith(b'HTTP/1.1 '):
-            raise TransformError("malformed status line, expected: 'HTTP/1.1 ', got: %r" % status_line)
-
-        http_version, status = status_line.split(None, 1)
-
-        while 1:
-            line = process.stdout.readline()
-            if not line:
-                raise TransformError('missing CRLF terminating headers')
-            line = line.strip()
-            if not line:
-                # end of headers
-                break
-            try:
-                header_name, value = line.split(b':', 1)
-            except ValueError:
-                raise TransformError('bad header line: %r' % (line))
-
-            header_name = native_(header_name, 'utf-8')
-
-            # WSGI disallows Connection header.
-            if header_name.lower() == 'connection':
-                continue
-
-            value = native_(value, 'utf-8')
-            value = value.strip()
-            headerlist.append((header_name, value))
-
-        r = self.Response(
-            status=status,
-            headerlist=headerlist,
-            app_iter=(),
-        )
-
-        content_length = r.content_length or 0
-        body = process.stdout.read(content_length)
-
-        if len(body) != content_length:
-            raise TransformError('process stdout closed while reading body')
-
-        r.body = body
-
+        if close:
+            self.clear_process(process)
         return r
 
     def __call__(self, response_in):
@@ -177,12 +128,12 @@ class TransformWorker(object):
             try:
                 response_out = self._transform(process, response_in)
 
-            except TransformError as e:
+            except ValueError as e:
                 e.comment = self.clear_process(process)
                 if attempt == 1:
                     log.warn('Retrying: %s: %s' % (type(e).__name__, e))
                     continue
-                raise
+                raise TransformError(*e.args), None, sys.exc_info()[2]
 
             except Exception as e:
                 self.clear_process(process)

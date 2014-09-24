@@ -1,7 +1,10 @@
+from subprocess_middleware.response import (
+    response_from_file,
+    response_to_file,
+)
 from webob import Response
 from webob.compat import (
     PY3,
-    bytes_,
 )
 import sys
 
@@ -17,25 +20,20 @@ def main():
         stdout = sys.stdout
 
     while 1:
-        http_version = stdin.read(len(HTTP_VERSION))
-        if not http_version:
+        response = response_from_file(Response, stdin)
+        if response is None:
             break  # EOF
-
-        response = Response.from_file(stdin)
 
         if 'X-Transform-Error' in response.headers:
             sys.stderr.write('Error output')
             break
 
         response.headers['X-Transformed'] = 'true'
-
-        body = response.body  # Ensure content length header
-        headers = bytes_(response.__str__(skip_body=True))
-        stdout.write(b'HTTP/1.1 ')
-        stdout.write(headers)
-        stdout.write(b'\r\n\r\n')
-        stdout.write(body)
+        response_to_file(response, stdout)
         stdout.flush()
+
+        if response.headers.get('Connection') == 'close':
+            break
 
 
 if __name__ == '__main__':
