@@ -4,7 +4,6 @@ try:
     import subprocess32 as subprocess
 except ImportError:
     import subprocess
-import sys
 import time
 import threading
 import weakref
@@ -15,15 +14,6 @@ from .response import (
 )
 
 log = logging.getLogger(__name__)
-
-
-class TransformError(ValueError):
-    def __init__(self, detail, comment=''):
-        self.detail = detail
-        self.comment = comment
-
-    def __str__(self):
-        return '%s\n%s' % (self.detail, self.comment)
 
 
 def cleanup(*processes, **kw):
@@ -133,7 +123,7 @@ class TransformWorker(object):
                 if attempt == 1:
                     log.warn('Retrying: %s: %s' % (type(e).__name__, e))
                     continue
-                raise TransformError(*e.args), None, sys.exc_info()[2]
+                raise
 
             except Exception as e:
                 self.clear_process(process)

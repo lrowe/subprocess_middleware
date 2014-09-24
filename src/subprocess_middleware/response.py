@@ -21,7 +21,7 @@ def response_to_file(self, fp, block_size=1 << 16):  # 64KB
     if not chunked:
         block = bytearray()
         for item in self.app_iter:
-            block.extend(item)
+            block.extend(bytes_(item))
             if len(block) >= block_size:
                 fp.write(block)
                 block = bytearray()
@@ -32,7 +32,7 @@ def response_to_file(self, fp, block_size=1 << 16):  # 64KB
 
     chunk = bytearray()
     for item in self.app_iter:
-        chunk.extend(item)
+        chunk.extend(bytes_(item))
         if len(chunk) < block_size:
             continue
         fp.write(bytes_('%x\r\n' % block_size))

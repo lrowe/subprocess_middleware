@@ -1,12 +1,7 @@
-from .worker import (
-    TransformError,
-    TransformWorker,
-)
-from webob import (
-    Request,
-    Response,
-)
+from .worker import TransformWorker
+from webob import Request
 from webob.compat import string_types
+from webob.exc import HTTPServerError
 import pkg_resources
 import shlex
 
@@ -34,9 +29,8 @@ def maybe_dotted(value):
     return pkg_resources.EntryPoint.parse('x=%s' % value).load(False)
 
 
-def transform_error(detail, comment):
-    body = 'Transform failed.\n\n{detail}\n\n{comment}'.format(detail=detail, comment=comment)
-    return Response(status="500 Internal Server Error", body=body)
+class TransformErrorResponse(HTTPServerError):
+    explanation = 'Transform failed.'
 
 
 class SubprocessMiddleware(object):
@@ -44,7 +38,7 @@ class SubprocessMiddleware(object):
     after_transform = None
 
     def __init__(self, app, global_conf, should_transform=None, after_transform=None,
-                 transform_error=transform_error, **settings):
+                 transform_error=TransformErrorResponse, **settings):
         self.app = app
         self.global_conf = global_conf
         self.should_transform = maybe_dotted(should_transform)
@@ -76,8 +70,8 @@ class SubprocessMiddleware(object):
 
         try:
             response = self.transform(response)
-        except TransformError as e:
-            response = self.transform_error(detail=e.detail, comment=e.comment)
+        except ValueError as e:
+            response = self.transform_error(e.args[0])
         else:
             self.after_transform and self.after_transform(request, response)
 

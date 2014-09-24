@@ -1,12 +1,9 @@
-from .worker import (
-    TransformError,
-    TransformWorker,
-)
-from pyramid.httpexceptions import HTTPInternalServerError
+from .worker import TransformWorker
+from pyramid.httpexceptions import HTTPServerError
 from pyramid.response import Response
 
 
-class TransformErrorResponse(HTTPInternalServerError):
+class TransformErrorResponse(HTTPServerError):
     explanation = 'Transform failed.'
 
 
@@ -31,8 +28,8 @@ class SubprocessTween(object):
                 return response
             try:
                 response = transform(response)
-            except TransformError as e:
-                response = transform_error(detail=e.detail, comment=e.comment)
+            except ValueError as e:
+                response = transform_error(e.args[0])
             else:
                 after_transform and after_transform(request, response)
             return response
