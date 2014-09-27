@@ -19,6 +19,9 @@ def main():
         stdin = sys.stdin
         stdout = sys.stdout
 
+    if '--error' in sys.argv:
+        raise Exception('error starting up')
+
     while 1:
         response = response_from_file(Response, stdin)
         if response is None:

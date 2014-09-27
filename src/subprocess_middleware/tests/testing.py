@@ -20,3 +20,11 @@ testing_tween = SubprocessTween(
     args=[sys.executable, '-m', 'subprocess_middleware.tests.testing_transform'],
     env=subprocess_env,
 )
+
+
+startup_error_tween = SubprocessTween(
+    should_transform=should_transform,
+    after_transform=after_transform,
+    args=[sys.executable, '-m', 'subprocess_middleware.tests.testing_transform', '--error'],
+    env=subprocess_env,
+)

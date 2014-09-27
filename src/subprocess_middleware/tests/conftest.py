@@ -76,3 +76,30 @@ def app(request):
 def testapp(app):
     from webtest import TestApp
     return TestApp(app)
+
+
+@pytest.fixture(scope='session', params=['tween', 'wsgi'])
+def startup_error_app(request):
+    config = make_config()
+
+    if request.param == 'tween':
+        config.add_tween('subprocess_middleware.tests.testing.startup_error_tween')
+        return config.make_wsgi_app()
+
+    elif request.param == 'wsgi':
+        import sys
+        from ..wsgi import SubprocessMiddleware
+        app = config.make_wsgi_app()
+        return SubprocessMiddleware(
+            app, {},
+            should_transform='subprocess_middleware.tests.testing:should_transform',
+            after_transform='subprocess_middleware.tests.testing:after_transform',
+            args='"{}" -m subprocess_middleware.tests.testing_transform --error'.format(sys.executable),
+            env='subprocess_middleware.tests.testing:subprocess_env',
+        )
+
+
+@pytest.fixture(scope='session')
+def startup_error_testapp(startup_error_app):
+    from webtest import TestApp
+    return TestApp(startup_error_app)

@@ -119,9 +119,9 @@ class TransformWorker(object):
                 response_out = self._transform(process, response_in)
 
             except ValueError as e:
-                e.comment = self.clear_process(process)
+                errout = self.clear_process(process)
                 if attempt == 1:
-                    log.warn('Retrying: %s: %s' % (type(e).__name__, e))
+                    log.warn('Retrying: %r\n%s', e, errout)
                     continue
                 raise
 
