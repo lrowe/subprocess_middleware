@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.3 (2014-09-26)
+----------------
+
+* Make subprocess reloading hookable, e.g. check subprocess memory with psutil.
+
+* Ensure subprocess startup errors are logged.
+
 0.2 (2014-09-24)
 ----------------
 

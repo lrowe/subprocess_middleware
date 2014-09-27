@@ -22,7 +22,7 @@ tests_require = [
 
 setup(
     name='subprocess_middleware',
-    version='0.2',
+    version='0.3',
     description='Subprocess WSGI middleware and Pyramid tween.',
     long_description=README + '\n\n' + CHANGES,
     packages=find_packages('src'),
