@@ -9,18 +9,23 @@ class TransformErrorResponse(HTTPServerError):
 
 class SubprocessTween(object):
     def __init__(self, should_transform=None, after_transform=None,
-                 transform_error=TransformErrorResponse, Response=Response, **kw):
+                 transform_error=TransformErrorResponse, reload_process=False,
+                 Response=Response, **kw):
         self.should_transform = should_transform
         self.after_transform = after_transform
-        self.transform = TransformWorker(Response=Response, **kw)
         self.transform_error = transform_error
+        self.reload_process = reload_process
+        self.Response = Response
+        self.kw = kw
 
     def __call__(self, handler, registry):
-        transform = self.transform
+        if registry.settings['pyramid.reload_templates']:
+            self.reload_process = True
+        transform = TransformWorker(
+            Response=Response, reload_process=self.reload_process, **self.kw)
         should_transform = self.should_transform
         after_transform = self.after_transform
         transform_error = self.transform_error
-        transform.reload_process = registry.settings['pyramid.reload_templates']
 
         def subprocess_tween(request):
             response = handler(request)

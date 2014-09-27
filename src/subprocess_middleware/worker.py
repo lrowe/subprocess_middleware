@@ -130,7 +130,8 @@ class TransformWorker(object):
                 raise
 
             else:
-                if self.reload_process:
+                if self.reload_process is True or \
+                        self.reload_process and self.reload_process(process):
                     self.clear_process(process)
                 else:
                     self.return_process(process)

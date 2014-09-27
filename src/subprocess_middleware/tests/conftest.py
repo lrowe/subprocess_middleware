@@ -67,6 +67,7 @@ def app(request):
             app, {},
             should_transform='subprocess_middleware.tests.testing:should_transform',
             after_transform='subprocess_middleware.tests.testing:after_transform',
+            reload_process='subprocess_middleware.tests.testing:reload_process',
             args='"{}" -m subprocess_middleware.tests.testing_transform'.format(sys.executable),
             env='subprocess_middleware.tests.testing:subprocess_env',
         )

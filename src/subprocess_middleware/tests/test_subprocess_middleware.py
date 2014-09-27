@@ -44,3 +44,22 @@ def test_startup_error(monkeypatch, startup_error_testapp):
     res = startup_error_testapp.get('/', status=500)
     assert 'X-Transformed' not in res.headers
     assert 'X-After-Transform' not in res.headers
+
+
+def test_reload_process(monkeypatch, testapp):
+    retval = False
+    pids = set()
+
+    def mock_reload_process(process):
+        pids.add(process.pid)
+        return retval
+    monkeypatch.setattr('subprocess_middleware.tests.testing._reload_process', mock_reload_process)
+
+    testapp.get('/')
+    testapp.get('/')
+    assert len(pids) == 1
+    retval = True
+    testapp.get('/')
+    # reload here
+    testapp.get('/')
+    assert len(pids) == 2

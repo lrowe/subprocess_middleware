@@ -6,7 +6,8 @@ import pkg_resources
 import shlex
 
 
-truthy = frozenset(('t', 'true', 'y', 'yes', 'on', '1'))
+truthy = frozenset(['t', 'true', 'y', 'yes', 'on', '1'])
+falsey = frozenset(['f', 'false', 'n', 'no', 'off', '0'])
 
 
 def asbool(s):
@@ -52,9 +53,15 @@ class SubprocessMiddleware(object):
         for name in ['env', 'preexec_fn', 'startupinfo', 'creationflags']:
             if name in settings:
                 kw[name] = maybe_dotted(settings[name])
-        for name in ['reload_process', 'shell', 'universal_newlines', 'restore_signals', 'start_new_session']:
+        for name in ['shell', 'universal_newlines', 'restore_signals', 'start_new_session']:
             if name in settings:
                 kw[name] = asbool(settings[name])
+        for name in ['reload_process']:
+            if name in settings and isinstance(settings[name], string_types):
+                if str(settings[name]).strip().lower() in (truthy | falsey):
+                    kw[name] = asbool(settings[name])
+                else:
+                    kw[name] = maybe_dotted(settings[name])
         if 'args' in settings and not kw.get('shell'):
             if isinstance(settings['args'], string_types,):
                 kw['args'] = shlex.split(settings['args'])
